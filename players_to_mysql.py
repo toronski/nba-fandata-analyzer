@@ -4,7 +4,6 @@ import players_data
 import pymysql
 import pandas as pd
 from sqlalchemy import create_engine
-#decorator
 from functools import wraps
 import time
 
