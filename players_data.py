@@ -3,23 +3,49 @@ import sqlalchemy
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playergamelog
 from nba_api.stats.library.parameters import SeasonAll
-import mysql.connector as msc
+from functools import wraps
+import time
 
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        print(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
+        return result
+    return timeit_wrapper
 
 engine = sqlalchemy.create_engine('mysql+pymysql://root:lakmunsen115@localhost/players')
 
 
 # Pull game logs of each player based on ID and Name
+@timeit
 def save_games_log(players_ids, players_list):
+    print('Starting save_games_log')
     # pull game logs of each player
-    games_logs = [playergamelog.PlayerGameLog(player_id=i, season = SeasonAll.all).get_data_frames()[0] for i in players_ids]
+    games_logs = []
+    players_log = 0
+    for i, id in enumerate(players_ids):
+        game_log = playergamelog.PlayerGameLog(player_id=id, season=SeasonAll.default).get_data_frames()[0]
+        games_logs.append(game_log)
+        players_log += 1
+        print(f'Done: {players_log} ID: {players_ids[i]})
+    print('Complete')
+
     players_data = dict(zip(players_list, games_logs))
+
+    print("Starting to iterate players.")
     # Iterate through players list and save to database
+    save_to_sql_log = 0
     for player_name in players_list:
         player_data = players_data[player_name]
         player_data = player_data.iloc[::-1]
         player_data.to_sql(player_name, con=engine, index=False, if_exists='replace')
-
+        save_to_sql_log += 1
+        print(f'Done: {save_to_sql_log}, Name: {players_list[player_name]})
+    print('Complete')
 
 # Find players names based on ID
 def players_id(players_list):
@@ -47,21 +73,14 @@ def get_players_ids():
     return ids_list, names_list
 
 
+ids_list, names_list = get_players_ids()
+save_games_log(ids_list, names_list)
 
-get_players_ids()
-"""
-print(id_list)
-print(type(id_list))
-print(name_list)
-print(type(name_list))
-Wywołaj listę wszystkich graczy.
-Zapisz wszystkich graczy w bazie danych.
-Wyciągnij ID wszystkich graczy z bazy danych i dodaj ich do listy.
-Ściągnij statystyki wszystkich gracz z listy i dodaj je do bazy danych.
-
-"""
-
-"""
+def test_case2():
+    names_list = ['Brandin Podziemski', 'LeBron James']
+    ids_list = players_id(names_list)
+    save_games_log(ids_list, names_list)
+    print("Gotowe")
 
 
 def test_case():
@@ -88,22 +107,6 @@ def test_case():
     print(f"Standardowa baza\n\n{df}")
     #print(type(df))
     print(f"Odwrócona baza\n\n{df_reversed}")
+    print('gotowe')
 
-
-#test_case()
-print('gotowe')
-
-
-
-# Zmień 'table_name' na nazwę, którą chcesz przypisać tabeli w bazie danych
-table_name = 'Brandin Podziemski'
-df.to_sql(table_name, con=engine, index=False, if_exists='append')
-'''
-
-
-#players_list = ["Brandin Podziemski", "LeBron James"]
-##ids = players_id(players_list)
-#datas = games_log(ids, players_list)
-#test_query = datas["Brandin Podziemski"]
-# print(type(test_query))
-"""
+#     games_logs = [playergamelog.PlayerGameLog(player_id=i, season = SeasonAll.default).get_data_frames()[0] for i in players_ids]
