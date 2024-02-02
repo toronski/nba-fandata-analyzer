@@ -10,9 +10,9 @@ engine = sqlalchemy.create_engine('mysql+pymysql://root:lakmunsen115@localhost/p
 
 
 # Pull game logs of each player based on ID and Name
-def save_games_log(player_ids, players_list):
+def save_games_log(players_ids, players_list):
     # pull game logs of each player
-    games_logs = [playergamelog.PlayerGameLog(player_id=i, season = SeasonAll.all).get_data_frames()[0] for i in player_ids]
+    games_logs = [playergamelog.PlayerGameLog(player_id=i, season = SeasonAll.all).get_data_frames()[0] for i in players_ids]
     players_data = dict(zip(players_list, games_logs))
     # Iterate through players list and save to database
     for player_name in players_list:
@@ -42,7 +42,9 @@ def get_players_ids():
     #players_index= sqlalchemy.Table('players_index', sqlalchemy.MetaData(), autoload_with=engine)
     
     result = pd.read_sql_query('SELECT id, full_name FROM players_index', engine)
-    print(result)
+    ids_list = result['id'].tolist()
+    names_list = result['full_name'].tolist()
+    return ids_list, names_list
 
 
 
