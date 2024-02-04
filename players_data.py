@@ -31,7 +31,7 @@ def save_games_log(players_ids, players_list):
         game_log = playergamelog.PlayerGameLog(player_id=id, season=SeasonAll.default).get_data_frames()[0]
         games_logs.append(game_log)
         players_log += 1
-        print(f'Done: {players_log} ID: {players_ids[i]})
+        print(f"Done: {players_log} ID: {players_ids[i]}")
     print('Complete')
 
     players_data = dict(zip(players_list, games_logs))
@@ -39,12 +39,12 @@ def save_games_log(players_ids, players_list):
     print("Starting to iterate players.")
     # Iterate through players list and save to database
     save_to_sql_log = 0
-    for player_name in players_list:
+    for i, player_name in enumerate(players_list):
         player_data = players_data[player_name]
         player_data = player_data.iloc[::-1]
         player_data.to_sql(player_name, con=engine, index=False, if_exists='replace')
         save_to_sql_log += 1
-        print(f'Done: {save_to_sql_log}, Name: {players_list[player_name]})
+        print(f"Done: {save_to_sql_log}, Name: {players_list[i]}")
     print('Complete')
 
 # Find players names based on ID
