@@ -34,7 +34,7 @@ def connect_to_mysql():
 
 engine = connect_to_mysql()
 
-# Pull game logs of each player based on ID and Name
+# Save game logs of each player based on ID and Name into database
 @timeit
 def save_games_log(players_ids, players_list):
     print('Starting save_games_log')
@@ -51,7 +51,7 @@ def save_games_log(players_ids, players_list):
     players_data = dict(zip(players_list, games_logs))
 
     print("Starting to iterate and save players.")
-    # Iterate through players list and save to database
+    # iterate through players list and save to database
     save_to_sql_log = 0
     for i, player_name in enumerate(players_list):
         player_data = players_data[player_name]
@@ -61,6 +61,7 @@ def save_games_log(players_ids, players_list):
         # add double-double and triple-double columns
         alter_dd_query = sqlalchemy.text(f"ALTER TABLE players.`{player_name}` ADD DD INT DEFAULT 0")
         alter_td_query = sqlalchemy.text(f"ALTER TABLE players.`{player_name}` ADD TD INT DEFAULT 0")
+        alter_fantasypts_query = sqlalchemy.text(f"ALTER TABLE players.`{player_name}` ADD FAN_PTS DECIMAL(5, 2) DEFAULT 0")
         
         # calculate dd and td
         update_dd_query = sqlalchemy.text(
@@ -91,20 +92,38 @@ def save_games_log(players_ids, players_list):
             END;"""
         )
 
+        update_fantasypts_query = sqlalchemy.text(
+            f"""UPDATE players.`{player_name}`
+            SET FAN_PTS = 
+                (PTS + 
+                (REB * 1.2) + 
+                (AST * 1.5) + 
+                (BLK * 3) + 
+                (STL * 3) + 
+                (TOV * (-2)) + 
+                FG3M + 
+                DD + 
+                TD);"""
+        )
+
         # save queries to database
+        queries = (
+            alter_dd_query, 
+            update_dd_query, 
+            alter_td_query, 
+            update_td_query, 
+            alter_fantasypts_query, 
+            update_fantasypts_query)
+        
         with engine.begin() as connection:
-            connection.execute(alter_dd_query)
-            connection.execute(update_dd_query)
-            connection.execute(alter_td_query)
-            connection.execute(update_td_query)
-            
+            for query in queries:
+                connection.execute(query)
+        
+        
         save_to_sql_log += 1
         print(f"Done: {save_to_sql_log}, Name: {players_list[i]}")
     print('Saving players data complete')
 
-
-def save_dd_td(player_name):
-    pd.read_sql_query('SELECT id, full_name FROM players_index', engine)
 
 # Find players names based on ID
 def players_id(players_list):
@@ -137,38 +156,10 @@ def get_players_ids():
 
 
 
-def test_case2():
+def test_case():
     names_list = ['Brandin Podziemski', 'LeBron James', 'Nikola Jokic']
     ids_list = players_id(names_list)
     save_games_log(ids_list, names_list)
     print("Gotowe")
 
-test_case2()
-
-def test_case():
-    example_players_list = ["Brandin Podziemski"]
-    # Ściągnij informacje o graczu
-    players_id_list = players_id(example_players_list)
-    #print(f'Players ID list\n {players_id_list}')
-    #print(type(players_id_list))
-
-    # Zbierz game log graczy z listy
-    players_game_log = save_games_log(players_id_list, example_players_list)
-    #print(f'Players game log\n {players_game_log}')
-    #print(type(players_game_log))
-    test_query_brandin = players_game_log["Brandin Podziemski"]
-    #print(f'Test query\n {test_query_brandin}')
-    print(type(test_query_brandin))
-
-    # Przyjmij, że masz DataFrame o nazwie 'df'
-    df = test_query_brandin
-    # Odwróć tego data frama
-    df_reversed = df.iloc[::-1]
-    
-    
-    print(f"Standardowa baza\n\n{df}")
-    #print(type(df))
-    print(f"Odwrócona baza\n\n{df_reversed}")
-    print('gotowe')
-
-# games_logs = [playergamelog.PlayerGameLog(player_id=i, season = SeasonAll.default).get_data_frames()[0] for i in players_ids]
+test_case()
