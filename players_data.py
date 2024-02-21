@@ -4,6 +4,7 @@ from nba_api.stats.static import players
 from nba_api.stats.endpoints import playergamelog
 from nba_api.stats.library.parameters import SeasonAll
 from functools import wraps
+from configparser import ConfigParser
 import time
 
 def timeit(func):
@@ -17,8 +18,21 @@ def timeit(func):
         return result
     return timeit_wrapper
 
-engine = sqlalchemy.create_engine('mysql+pymysql://root:lakmunsen115@localhost/players')
 
+# connect to mysql based on info found in config.ini
+def connect_to_mysql():
+    config = ConfigParser()
+    config.read('config.ini')
+    DB_USER = config.get('Database', 'DB_USER')
+    DB_PASSWORD = config.get('Database', 'DB_PASSWORD')
+    DB_HOST = config.get('Database', 'DB_HOST')
+    #DB_PORT = config.get('Database', 'DB_PORT')
+    DB_NAME = config.get('Database', 'DB_NAME')
+    engine = sqlalchemy.create_engine(f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}')
+    return engine
+
+
+engine = connect_to_mysql()
 
 # Pull game logs of each player based on ID and Name
 @timeit
@@ -139,7 +153,7 @@ def test_case():
     #print(type(players_id_list))
 
     # Zbierz game log graczy z listy
-    players_game_log = games_log(players_id_list, example_players_list)
+    players_game_log = save_games_log(players_id_list, example_players_list)
     #print(f'Players game log\n {players_game_log}')
     #print(type(players_game_log))
     test_query_brandin = players_game_log["Brandin Podziemski"]
