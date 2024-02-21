@@ -13,7 +13,7 @@ def timeit(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-        print(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
+        print(f'Function {func.__name__}\nTook {total_time:.4f} seconds')
         return result
     return timeit_wrapper
 
@@ -32,20 +32,65 @@ def save_games_log(players_ids, players_list):
         games_logs.append(game_log)
         players_log += 1
         print(f"Done: {players_log} ID: {players_ids[i]}")
-    print('Complete')
+    print('Downloading players data complete')
 
     players_data = dict(zip(players_list, games_logs))
 
-    print("Starting to iterate players.")
+    print("Starting to iterate and save players.")
     # Iterate through players list and save to database
     save_to_sql_log = 0
     for i, player_name in enumerate(players_list):
         player_data = players_data[player_name]
         player_data = player_data.iloc[::-1]
         player_data.to_sql(player_name, con=engine, index=False, if_exists='replace')
+
+        # add double-double and triple-double columns
+        alter_dd_query = sqlalchemy.text(f"ALTER TABLE players.`{player_name}` ADD DD INT DEFAULT 0")
+        alter_td_query = sqlalchemy.text(f"ALTER TABLE players.`{player_name}` ADD TD INT DEFAULT 0")
+        
+        # calculate dd and td
+        update_dd_query = sqlalchemy.text(
+            f"""UPDATE players.`{player_name}`
+            SET DD = CASE
+                WHEN (
+                    (PTS >= 10) +
+                    (REB >= 10) +
+                    (AST >= 10) +
+                    (STL >= 10) +
+                    (BLK >= 10)
+                ) >= 2 THEN 1
+                ELSE 0
+            END;"""
+        )
+
+        update_td_query = sqlalchemy.text(
+            f"""UPDATE players.`{player_name}`
+            SET TD = CASE
+                WHEN (
+                    (PTS >= 10) +
+                    (REB >= 10) +
+                    (AST >= 10) +
+                    (STL >= 10) +
+                    (BLK >= 10)
+                ) >= 3 THEN 1
+                ELSE 0
+            END;"""
+        )
+
+        # save queries to database
+        with engine.begin() as connection:
+            connection.execute(alter_dd_query)
+            connection.execute(update_dd_query)
+            connection.execute(alter_td_query)
+            connection.execute(update_td_query)
+            
         save_to_sql_log += 1
         print(f"Done: {save_to_sql_log}, Name: {players_list[i]}")
-    print('Complete')
+    print('Saving players data complete')
+
+
+def save_dd_td(player_name):
+    pd.read_sql_query('SELECT id, full_name FROM players_index', engine)
 
 # Find players names based on ID
 def players_id(players_list):
@@ -73,15 +118,18 @@ def get_players_ids():
     return ids_list, names_list
 
 
-ids_list, names_list = get_players_ids()
-save_games_log(ids_list, names_list)
+# ids_list, names_list = get_players_ids()
+# save_games_log(ids_list, names_list)
+
+
 
 def test_case2():
-    names_list = ['Brandin Podziemski', 'LeBron James']
+    names_list = ['Brandin Podziemski', 'LeBron James', 'Nikola Jokic']
     ids_list = players_id(names_list)
     save_games_log(ids_list, names_list)
     print("Gotowe")
 
+test_case2()
 
 def test_case():
     example_players_list = ["Brandin Podziemski"]
@@ -109,4 +157,4 @@ def test_case():
     print(f"Odwrócona baza\n\n{df_reversed}")
     print('gotowe')
 
-#     games_logs = [playergamelog.PlayerGameLog(player_id=i, season = SeasonAll.default).get_data_frames()[0] for i in players_ids]
+# games_logs = [playergamelog.PlayerGameLog(player_id=i, season = SeasonAll.default).get_data_frames()[0] for i in players_ids]
