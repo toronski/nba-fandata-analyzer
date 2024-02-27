@@ -4,6 +4,7 @@ from dash import Dash, html, dcc, Input, Output, callback, State, MATCH, Patch
 import pandas as pd
 import plotly.graph_objects as go
 from configparser import ConfigParser
+import dash_bootstrap_components as dbc
 import time
 
 def connect_to_mysql():
@@ -27,12 +28,16 @@ brandin = pd.read_sql_query(
             FROM players.`Brandin Podziemski`;""",
             engine
 )
+# show last X records
+brandin = brandin.tail(15)
 
-brandin = brandin.iloc[::-1]
+external_stylesheets = ['assets/litera.css']
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__,
-           external_stylesheets=external_stylesheets
+           external_stylesheets=external_stylesheets,
+           # response to mobile
+           meta_tags=[{'name':'viewport',
+                       'content': 'width=device-width, initial-scale=1.0'}]
 )
 
 # Take selected player name
@@ -44,13 +49,9 @@ df2 = pd.read_sql_table("LeBron James", engine)
 fig1 = go.FigureWidget(
     data=[
         go.Bar(name='BRANDIN PODZIEMSKI', x=df1['MATCHUP_DATE'], y=df1['FAN_PTS'],
-               marker_color='#4D935D')],
-    layout=go.Layout(
-            width = 800,
-            margin = dict(l=300, r=200),
-            #plot_bgcolor='#101010'
-        )
-)
+               marker_color='#4D935D')
+    ])
+
 # add minutes scatter
 fig1.add_trace(
     go.Scatter(mode='lines+markers', name='Minutes played', x=df1['MATCHUP_DATE'], y=df1['MIN'],
@@ -104,12 +105,8 @@ for i, fan_pts in enumerate(df1['FAN_PTS']):
 # Specific team matchup history
 fig2 = go.FigureWidget(
     data=[
-        go.Bar(name='BRANDIN PODZIEMSKI', x=df1['MATCHUP_DATE'], y=df1['MIN'])],
-    layout=go.Layout(
-            width = 800,
-            margin = dict(l=300, r=200)
-    )
-)
+        go.Bar(name='BRANDIN PODZIEMSKI', x=df1['MATCHUP_DATE'], y=df1['MIN'])
+    ])
 
 fig2.add_trace(
     go.Scatter(name='Minutes played', x=df1['MATCHUP_DATE'], y=df1['MIN'])
@@ -117,76 +114,75 @@ fig2.add_trace(
 
 
 # main layout
-app.layout = html.Div([
-    html.Div(
-        className="app-header",
-        children=[
-            html.Div("so-fan stats", className="app-header-title")
-        ]
-    ),
+app.layout = html.Div(
+    className='container',
+    children=[
+        html.H1("So-Fan STATS",
+                className='item app-header'
+        ),
 
-    html.Div(
-        className='refresh-players',
-        children=[
-            # button to update players logs
-            html.Button("Update players logs", id="btn_updateLogs"),
-            dcc.Loading(
-                    id="loading-1",
-                    type="default",
-                    children=html.Div(id="loading-output-1")
-            )
-        ]
-    ),
+        # search for players
+        html.Div(
+            className="item search-players",
+            children=[
+                dcc.Store(id='players-store', storage_type='session'),
+                dcc.Dropdown(
+                    id='player-search-dropdown',
+                    # here put list of players from mysql
+                    options=[{'label': player, 'value': player} for player in 
+                            ['Lebron James', 'Victor Wembanyama', 'Brandin Podziemski', 'Anthony Davis', 'Stephen Curry']],
+                    placeholder="Search for a player",
+                ),
+                html.Div(id='player-search-output', children=[])
+            ]
+        ),
+        # Tabs to go see through different players added to team
+        html.Div(
+            className="item players-tabs",
+            children = [
+                dcc.Tabs(id="tabs", value='tab-1',
+                        children=[
+                            dcc.Tab(label='Player 1', value='tab-1'),
+                            dcc.Tab(label='Player 2', value='tab-2'),
+                            dcc.Tab(label='Player 3', value='tab-3'),
+                            dcc.Tab(label='Player 4', value='tab-4'),
+                            dcc.Tab(label='Player 5', value='tab-5'),
+                        ]
+                ),
+                html.Div(id='tabs-content')
+            ]
+        ),
 
-    # search for players
-    html.Div(
-        className="pick-players",
-        children=[
-            dcc.Store(id='players-store', storage_type='session'),
-            dcc.Dropdown(
-                id='player-search-dropdown',
-                # here put list of players from mysql
-                options=[{'label': player, 'value': player} for player in 
-                        ['Lebron James', 'Victor Wembanyama', 'Brandin Podziemski', 'Anthony Davis', 'Stephen Curry']],
-                placeholder="Search for a player",
-            ),
-            html.Div(id='player-search-output', children=[])
-        ]
-    ),
+        html.Div(
+            className="item previous-games-graphs",
+            children=[
+                # graph showing previous matchup   
+                dcc.Graph(
+                    id='Brandin Podziemski',
+                    figure=fig1
+                ),
+                # graph showing previous matchup against chosen opponent
+                dcc.Graph(
+                    id='Victor',
+                    figure=fig2
+                )
+            ]
+        ),
 
-    # Tabs to go see through different players added to team
-    html.Div(
-        className="team-tabs",
-        children = [
-            dcc.Tabs(id="tabs", value='tab-1',
-                    children=[
-                        dcc.Tab(label='Player 1', value='tab-1'),
-                        dcc.Tab(label='Player 2', value='tab-2'),
-                        dcc.Tab(label='Player 3', value='tab-3'),
-                        dcc.Tab(label='Player 4', value='tab-4'),
-                        dcc.Tab(label='Player 5', value='tab-5'),
-                    ]
-            ),
-            html.Div(id='tabs-content')
-        ]
-    ),
-
-    html.Div(
-        className="previous-games",
-        children=[
-            # graph showing previous matchup   
-            dcc.Graph(
-                id='Brandin Podziemski',
-                figure=fig1
-            ),
-            # graph showing previous matchup against chosen opponent
-            dcc.Graph(
-                id='Victor',
-                figure=fig2
-            )
-        ]
-    )
-])
+        html.Div(
+            className='item refresh-players',
+            children=[
+                # button to update players logs
+                html.Button("Update players logs", id="btn_updateLogs"),
+                dcc.Loading(
+                        id="loading-1",
+                        type="default",
+                        children=html.Div(id="loading-output-1")
+                )
+            ]
+        )
+    ]
+)
 
 # loading mark for updating players
 @app.callback(Output("loading-output-1", "children"), Input("btn_updateLogs", "n_clicks"))
@@ -197,7 +193,7 @@ def input_triggers_spinner(n_clicks):
     # button clicked
     else:
         # here will be function to update players log
-        time.sleep(1)
+        time.sleep(3)
         return "Updating complete"
 
 
