@@ -57,8 +57,38 @@ fig1.add_trace(
                line=dict(color='pink'), marker=dict(color='red'))
 )
 
+
+# add dropdown menu to graph
+"""
+fig1.update_layout(
+    updatemenus=[
+        dict(
+            buttons=list([
+                dict(
+                    args=["type", "surface"],
+                    label="3D Surface",
+                    method="restyle"
+                ),
+                dict(
+                    args=["type", "heatmap"],
+                    label="Heatmap",
+                    method="restyle"
+                )
+            ]),
+            direction="down",
+            pad={"r": 10, "t": 10},
+            showactive=True,
+            x=0.1,
+            xanchor="left",
+            y=1.1,
+            yanchor="top"
+        ),
+    ]
+)
+"""
 # add numbers of fan points per game
-"""for i, fan_pts in enumerate(df1['FAN_PTS']):
+"""
+for i, fan_pts in enumerate(df1['FAN_PTS']):
     fig1.add_annotation(
         x=df1['MATCHUP_DATE'][i],
         y=fan_pts + 2,
@@ -68,7 +98,8 @@ fig1.add_trace(
             size=8,
             color="Black"
         ),
-    )"""
+    )
+"""
 
 # Specific team matchup history
 fig2 = go.FigureWidget(
@@ -86,57 +117,79 @@ fig2.add_trace(
 
 
 # main layout
-app.layout = html.Div(
-    
-    children=[
+app.layout = html.Div([
+    html.Div(
+        className="app-header",
+        children=[
+            html.Div("so-fan stats", className="app-header-title")
+        ]
+    ),
 
-    # button to update players logs
-    html.Button("Update players logs", id="btn_updateLogs"),
-    dcc.Loading(
-            id="loading-1",
-            type="default",
-            children=html.Div(id="loading-output-1")
-        ),
+    html.Div(
+        className='refresh-players',
+        children=[
+            # button to update players logs
+            html.Button("Update players logs", id="btn_updateLogs"),
+            dcc.Loading(
+                    id="loading-1",
+                    type="default",
+                    children=html.Div(id="loading-output-1")
+            )
+        ]
+    ),
 
     # search for players
-    dcc.Store(id='players-store', storage_type='session'),
-    dcc.Dropdown(
-        id='player-search-dropdown',
-        # here put list of players from mysql
-        options=[{'label': player, 'value': player} for player in 
-                 ['Lebron James', 'Victor Wembanyama', 'Brandin Podziemski', 'Anthony Davis', 'Stephen Curry']],
-        placeholder="Search for a player",
-    ),
-    html.Div(id='player-search-output', children=[]),
-
-    # tabs to go see through different players added to team
-    dcc.Tabs(id="tabs", value='tab-1', children=[
-        dcc.Tab(label='Player 1', value='tab-1'),
-        dcc.Tab(label='Player 2', value='tab-2'),
-        dcc.Tab(label='Player 3', value='tab-3'),
-        dcc.Tab(label='Player 4', value='tab-4'),
-        dcc.Tab(label='Player 5', value='tab-5'),
-    ]),
-    html.Div(id='tabs-content'),
-
-    # slider to choose number of seen matchups from all history
-    dcc.Slider(-5, 10, 1, value=-3),
-
-    # graph showing previous matchup   
-    dcc.Graph(
-        id='Brandin Podziemski',
-        figure=fig1
+    html.Div(
+        className="pick-players",
+        children=[
+            dcc.Store(id='players-store', storage_type='session'),
+            dcc.Dropdown(
+                id='player-search-dropdown',
+                # here put list of players from mysql
+                options=[{'label': player, 'value': player} for player in 
+                        ['Lebron James', 'Victor Wembanyama', 'Brandin Podziemski', 'Anthony Davis', 'Stephen Curry']],
+                placeholder="Search for a player",
+            ),
+            html.Div(id='player-search-output', children=[])
+        ]
     ),
 
-    # graph showing previous matchup against chosen opponent
-    dcc.Graph(
-        id='Victor',
-        figure=fig2
+    # Tabs to go see through different players added to team
+    html.Div(
+        className="team-tabs",
+        children = [
+            dcc.Tabs(id="tabs", value='tab-1',
+                    children=[
+                        dcc.Tab(label='Player 1', value='tab-1'),
+                        dcc.Tab(label='Player 2', value='tab-2'),
+                        dcc.Tab(label='Player 3', value='tab-3'),
+                        dcc.Tab(label='Player 4', value='tab-4'),
+                        dcc.Tab(label='Player 5', value='tab-5'),
+                    ]
+            ),
+            html.Div(id='tabs-content')
+        ]
+    ),
+
+    html.Div(
+        className="previous-games",
+        children=[
+            # graph showing previous matchup   
+            dcc.Graph(
+                id='Brandin Podziemski',
+                figure=fig1
+            ),
+            # graph showing previous matchup against chosen opponent
+            dcc.Graph(
+                id='Victor',
+                figure=fig2
+            )
+        ]
     )
 ])
 
 # loading mark for updating players
-@callback(Output("loading-output-1", "children"), Input("btn_updateLogs", "n_clicks"))
+@app.callback(Output("loading-output-1", "children"), Input("btn_updateLogs", "n_clicks"))
 def input_triggers_spinner(n_clicks):
     # button not clicked
     if n_clicks is None:
@@ -164,7 +217,7 @@ def display_selected_player(player, players_list):
     return dcc.Checklist(options=[{'label': p, 'value': p} for p in players_list]), players_list, None
 
 # displaying tabs of players
-@callback(Output('tabs-content', 'children'),
+@app.callback(Output('tabs-content', 'children'),
                 Input('tabs', 'value'))
 def render_content(tab):
     if tab == 'tab-1':
