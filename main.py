@@ -133,7 +133,8 @@ app.layout = html.Div(
                             ['Lebron James', 'Victor Wembanyama', 'Brandin Podziemski', 'Anthony Davis', 'Stephen Curry']],
                     placeholder="Search for a player",
                 ),
-                html.Div(id='player-search-output', children=[])
+                html.Div(id='player-search-output', children=[]),
+                html.Button('Remove', id='remove-button', n_clicks=0)
             ]
         ),
         # Tabs to go see through different players added to team
@@ -149,7 +150,7 @@ app.layout = html.Div(
                             dcc.Tab(label='Player 5', value='tab-5'),
                         ]
                 ),
-                html.Div(id='tabs-content')
+                #html.Div(id='tabs-content')
             ]
         ),
 
@@ -162,10 +163,7 @@ app.layout = html.Div(
                     figure=fig1
                 ),
                 # graph showing previous matchup against chosen opponent
-                dcc.Graph(
-                    id='Victor',
-                    figure=fig2
-                )
+
             ]
         ),
 
