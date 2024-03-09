@@ -49,10 +49,9 @@ def fantasypts_counter(player_name):
         )
     return update_fantasypts_query
 
-def get_all_players(*args):
-    value = str(args)
+def get_all_players():
     get_players = sqlalchemy.text(
-        f"SELECT {value} FROM players_index"
+        f"SELECT id, full_name FROM players_index"
     )
     return get_players
 
@@ -71,4 +70,3 @@ def alter_table(player_name, column_name, column_type):
         ADD {column_name} {column_type} DEFAULT 0"""
     )
     return alter
-

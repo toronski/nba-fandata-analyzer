@@ -5,7 +5,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from configparser import ConfigParser
 import dash_bootstrap_components as dbc
-import time
+from players_data import save_games_log, get_players_ids, save_active_players
+import queries as q
 
 def connect_to_mysql():
     config = ConfigParser()
@@ -31,7 +32,7 @@ brandin = pd.read_sql_query(
 # show last X records
 brandin = brandin.tail(15)
 
-external_stylesheets = ['assets/litera.css']
+external_stylesheets = ['https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/litera/bootstrap.min.css']
 
 app = Dash(__name__,
            external_stylesheets=external_stylesheets,
@@ -129,8 +130,9 @@ app.layout = html.Div(
                 dcc.Dropdown(
                     id='player-search-dropdown',
                     # here put list of players from mysql
-                    options=[{'label': player, 'value': player} for player in 
-                            ['Lebron James', 'Victor Wembanyama', 'Brandin Podziemski', 'Anthony Davis', 'Stephen Curry']],
+                    options=[{'label': player, 'value': player} for player in
+                            get_players_ids('name')
+                    ],
                     placeholder="Search for a player",
                 ),
                 html.Div(id='player-search-output', children=[]),
@@ -190,8 +192,10 @@ def input_triggers_spinner(n_clicks):
         return None
     # button clicked
     else:
-        # here will be function to update players log
-        time.sleep(3)
+        # function to update players log
+        save_active_players()
+        id, name = get_players_ids('id, name')
+        save_games_log(id, name)
         return "Updating complete"
 
 

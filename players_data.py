@@ -6,6 +6,7 @@ from nba_api.stats.library.parameters import SeasonAll
 from functools import wraps
 from configparser import ConfigParser
 import time
+import queries as q
 
 def timeit(func):
     @wraps(func)
@@ -59,52 +60,14 @@ def save_games_log(players_ids, players_list):
         player_data.to_sql(player_name, con=engine, index=False, if_exists='replace')
 
         # add double-double and triple-double columns
-        alter_dd_query = sqlalchemy.text(f"ALTER TABLE players.`{player_name}` ADD DD INT DEFAULT 0")
-        alter_td_query = sqlalchemy.text(f"ALTER TABLE players.`{player_name}` ADD TD INT DEFAULT 0")
-        alter_fantasypts_query = sqlalchemy.text(f"ALTER TABLE players.`{player_name}` ADD FAN_PTS DECIMAL(5, 2) DEFAULT 0")
+        alter_dd_query = q.alter_table(player_name, 'DD', 'INT')
+        alter_td_query = q.alter_table(player_name, 'TD', 'INT')
+        alter_fantasypts_query = q.alter_table(player_name, 'FAN_PTS', 'DECIMAL(5, 2)')
         
         # calculate dd and td
-        update_dd_query = sqlalchemy.text(
-            f"""UPDATE players.`{player_name}`
-            SET DD = CASE
-                WHEN (
-                    (PTS >= 10) +
-                    (REB >= 10) +
-                    (AST >= 10) +
-                    (STL >= 10) +
-                    (BLK >= 10)
-                ) >= 2 THEN 1
-                ELSE 0
-            END;"""
-        )
-
-        update_td_query = sqlalchemy.text(
-            f"""UPDATE players.`{player_name}`
-            SET TD = CASE
-                WHEN (
-                    (PTS >= 10) +
-                    (REB >= 10) +
-                    (AST >= 10) +
-                    (STL >= 10) +
-                    (BLK >= 10)
-                ) >= 3 THEN 1
-                ELSE 0
-            END;"""
-        )
-
-        update_fantasypts_query = sqlalchemy.text(
-            f"""UPDATE players.`{player_name}`
-            SET FAN_PTS = 
-                (PTS + 
-                (REB * 1.2) + 
-                (AST * 1.5) + 
-                (BLK * 3) + 
-                (STL * 3) + 
-                (TOV * (-2)) + 
-                FG3M + 
-                DD + 
-                TD);"""
-        )
+        update_dd_query = q.double_double_counter(player_name)
+        update_td_query = q.triple_double_counter(player_name)
+        update_fantasypts_query = q.fantasypts_counter(player_name)
 
         # save queries to database
         queries = (
@@ -142,14 +105,17 @@ def save_active_players():
 
 
 # Get players IDs and names from DB
-def get_players_ids():
+def get_players_ids(arg):
     #players_index= sqlalchemy.Table('players_index', sqlalchemy.MetaData(), autoload_with=engine)
-    
-    result = pd.read_sql_query('SELECT id, full_name FROM players_index', engine)
+    result = pd.read_sql_query(q.get_all_players(), engine)
     ids_list = result['id'].tolist()
     names_list = result['full_name'].tolist()
-    return ids_list, names_list
-
+    if arg == 'id':
+        return ids_list
+    elif arg == 'name':
+        return names_list
+    elif arg == 'id, name':
+        return ids_list, names_list
 
 # ids_list, names_list = get_players_ids()
 # save_games_log(ids_list, names_list)
@@ -157,9 +123,9 @@ def get_players_ids():
 
 
 def test_case():
-    names_list = ['Brandin Podziemski', 'LeBron James', 'Nikola Jokic']
-    ids_list = players_id(names_list)
-    save_games_log(ids_list, names_list)
+    ids = get_players_ids('name')
+    print(ids)
+    print(type(ids))
     print("Gotowe")
 
 test_case()
