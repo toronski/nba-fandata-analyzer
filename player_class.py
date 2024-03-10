@@ -13,7 +13,7 @@ class Player():
     def show_previous_games(player_name):
         # get player info needed for 
         player = pd.read_sql_query(
-            q.get_player_info(player_name), engine
+            q.get_games_info(player_name), engine
         )
         player = player.tail(10) # in bracket value for number of showed games
         # built all matchup history
@@ -43,3 +43,6 @@ class Player():
                             figure=fig
                         ),
         return previous_graph
+    
+
+    def 

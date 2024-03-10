@@ -56,16 +56,17 @@ def get_all_players():
     return get_players
 
 
-def get_player_info(player_name):
+def get_games_info(player_name):
     player_info = sqlalchemy.text(
-        f"""SELECT
-            CONCAT(GAME_DATE, ' ', MATCHUP) AS MATCHUP_DATE, FAN_PTS, MIN
-            FROM players.`{player_name}`;"""
+        f"""SELECT 
+            SUBSTRING_INDEX(CONCAT(GAME_DATE, ' ', MATCHUP), ' ', -1) AS MATCHUP_DATE, FAN_PTS, MIN
+            FROM players.`{player_name}`
+            ORDER BY MATCHUP_DATE;"""
     )
     return player_info
 
 def alter_table(player_name, column_name, column_type):
-    alter = sqlalchemy.txt(
+    alter = sqlalchemy.text(
         f"""ALTER TABLE players.`{player_name}`
         ADD {column_name} {column_type} DEFAULT 0"""
     )
