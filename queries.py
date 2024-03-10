@@ -65,7 +65,7 @@ def get_player_info(player_name):
     return player_info
 
 def alter_table(player_name, column_name, column_type):
-    alter = sqlalchemy.txt(
+    alter = sqlalchemy.text(
         f"""ALTER TABLE players.`{player_name}`
         ADD {column_name} {column_type} DEFAULT 0"""
     )
