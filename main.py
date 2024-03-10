@@ -152,7 +152,9 @@ app.layout = html.Div(
                             dcc.Tab(label='Player 5', value='tab-5'),
                         ]
                 ),
-                #html.Div(id='tabs-content')
+                html.Div(
+                    id='tabs-content',
+                )    
             ]
         ),
 
@@ -211,6 +213,10 @@ def display_selected_player(player, players_list):
     if players_list is None:
         players_list = []
     if player is not None:
+        # player class should be used here
+        """
+        player = Player(player)
+        """
         players_list.append(player)
     return dcc.Checklist(options=[{'label': p, 'value': p} for p in players_list]), players_list, None
 
@@ -220,8 +226,15 @@ def display_selected_player(player, players_list):
 def render_content(tab):
     if tab == 'tab-1':
         return html.Div([
-            html.H3('Player 1')
-        ])
+            html.H3('Player 1'),
+                # graph showing previous matchup   
+                dcc.Graph(
+                    id='Brandin Podziemski',
+                    figure=fig1
+                ),
+                # graph showing previous matchup against chosen opponent
+        ]),
+
     elif tab == 'tab-2':
         return html.Div([
             html.H3('Player 2')
