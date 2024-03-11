@@ -1,36 +1,11 @@
 
-import sqlalchemy
 from dash import Dash, html, dcc, Input, Output, callback, State, MATCH, Patch
-import pandas as pd
-import plotly.graph_objects as go
-from configparser import ConfigParser
-import dash_bootstrap_components as dbc
 from players_data import save_games_log, get_players_ids, save_active_players
-import queries as q
-
-def connect_to_mysql():
-    config = ConfigParser()
-    config.read('config.ini')
-    DB_USER = config.get('Database', 'DB_USER')
-    DB_PASSWORD = config.get('Database', 'DB_PASSWORD')
-    DB_HOST = config.get('Database', 'DB_HOST')
-    #DB_PORT = config.get('Database', 'DB_PORT')
-    DB_NAME = config.get('Database', 'DB_NAME')
-    engine = sqlalchemy.create_engine(f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}')
-    return engine
+import mysql_connector
+from player_class import Player
 
 
-engine = connect_to_mysql()
-
-
-brandin = pd.read_sql_query(
-    """SELECT
-            CONCAT(GAME_DATE, ' ', MATCHUP) AS MATCHUP_DATE, FAN_PTS, MIN
-            FROM players.`Brandin Podziemski`;""",
-            engine
-)
-# show last X records
-brandin = brandin.tail(15)
+engine = mysql_connector.engine
 
 external_stylesheets = ['https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/litera/bootstrap.min.css']
 
@@ -39,24 +14,6 @@ app = Dash(__name__,
            # response to mobile
            meta_tags=[{'name':'viewport',
                        'content': 'width=device-width, initial-scale=1.0'}]
-)
-
-# Take selected player name
-df1 = brandin #pd.read_sql_table("Brandin Podziemski", engine)
-df2 = pd.read_sql_table("LeBron James", engine)
-
-
-# show all matchup history
-fig1 = go.FigureWidget(
-    data=[
-        go.Bar(name='BRANDIN PODZIEMSKI', x=df1['MATCHUP_DATE'], y=df1['FAN_PTS'],
-               marker_color='#4D935D')
-    ])
-
-# add minutes scatter
-fig1.add_trace(
-    go.Scatter(mode='lines+markers', name='Minutes played', x=df1['MATCHUP_DATE'], y=df1['MIN'],
-               line=dict(color='pink'), marker=dict(color='red'))
 )
 
 
@@ -103,16 +60,6 @@ for i, fan_pts in enumerate(df1['FAN_PTS']):
     )
 """
 
-# Specific team matchup history
-fig2 = go.FigureWidget(
-    data=[
-        go.Bar(name='BRANDIN PODZIEMSKI', x=df1['MATCHUP_DATE'], y=df1['MIN'])
-    ])
-
-fig2.add_trace(
-    go.Scatter(name='Minutes played', x=df1['MATCHUP_DATE'], y=df1['MIN'])
-)
-
 
 # main layout
 app.layout = html.Div(
@@ -131,7 +78,7 @@ app.layout = html.Div(
                     id='player-search-dropdown',
                     # here put list of players from mysql
                     options=[{'label': player, 'value': player} for player in
-                            get_players_ids('name')
+                            [name['full_name'] for name in get_players_ids()]
                     ],
                     placeholder="Search for a player",
                 ),
@@ -156,18 +103,6 @@ app.layout = html.Div(
             ]
         ),
 
-        html.Div(
-            className="item previous-games-graphs",
-            children=[
-                # graph showing previous matchup   
-                dcc.Graph(
-                    id='Brandin Podziemski',
-                    figure=fig1
-                ),
-                # graph showing previous matchup against chosen opponent
-
-            ]
-        ),
 
         html.Div(
             className='item refresh-players',
@@ -194,7 +129,7 @@ def input_triggers_spinner(n_clicks):
     else:
         # function to update players log
         save_active_players()
-        id, name = get_players_ids('id, name')
+        id, name = get_players_ids()
         save_games_log(id, name)
         return "Updating complete"
 
@@ -211,8 +146,15 @@ def display_selected_player(player, players_list):
     if players_list is None:
         players_list = []
     if player is not None:
-        players_list.append(player)
-    return dcc.Checklist(options=[{'label': p, 'value': p} for p in players_list]), players_list, None
+        # iterate through players list with dict of specific player
+        data = get_players_ids() # for each dict
+        for index in data:
+            if index['full_name'] == player:
+                player = Player(index['id'], player) # create player class
+                # add player name to your squad
+                players_list.append(str(player))
+    options = [{'label': p, 'value': p} for p in players_list]
+    return dcc.Checklist(options=options), players_list, None
 
 # displaying tabs of players
 @app.callback(Output('tabs-content', 'children'),
@@ -220,8 +162,12 @@ def display_selected_player(player, players_list):
 def render_content(tab):
     if tab == 'tab-1':
         return html.Div([
-            html.H3('Player 1')
-        ])
+            html.H3('Player 1'),
+                # graph showing previous matchup   
+                
+                # graph showing previous matchup against chosen opponent
+        ]),
+
     elif tab == 'tab-2':
         return html.Div([
             html.H3('Player 2')

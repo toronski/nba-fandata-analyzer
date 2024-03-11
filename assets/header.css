@@ -3,9 +3,9 @@
     grid-template-rows: 110px 575px 75px 50px;
     grid-template-columns: 300px 1fr;
     grid-template-areas:
-    'header players'
-    'search graphs'
-    'refresh teams'
+    'header players_tabs'
+    'search players_tabs'
+    'refresh players_tabs'
     'footnote footnote'
     ;
 }
@@ -22,13 +22,13 @@
 
 .players-tabs {
     margin: 30px;
-    grid-area: players;
+    grid-area: players_tabs;
 }
-
+/*
 .previous-games-graphs {
     grid-area: graphs;
 }
-
+*/
 .refresh-players {
     grid-area: refresh;
 }

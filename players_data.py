@@ -105,17 +105,19 @@ def save_active_players():
 
 
 # Get players IDs and names from DB
-def get_players_ids(arg):
+def get_players_ids():
     #players_index= sqlalchemy.Table('players_index', sqlalchemy.MetaData(), autoload_with=engine)
     result = pd.read_sql_query(q.get_all_players(), engine)
-    ids_list = result['id'].tolist()
-    names_list = result['full_name'].tolist()
-    if arg == 'id':
-        return ids_list
-    elif arg == 'name':
-        return names_list
-    elif arg == 'id, name':
-        return ids_list, names_list
+    # ids_list = result['id'].tolist()
+    # names_list = result['full_name'].tolist()
+    # if arg == 'id':
+    #     return ids_list
+    # elif arg == 'name':
+    #     return names_list
+    # elif arg == 'id, name':
+    #     return ids_list, names_list
+    result = result.to_dict(orient='records') # connect id with name
+    return result
 
 # ids_list, names_list = get_players_ids()
 # save_games_log(ids_list, names_list)
@@ -123,9 +125,9 @@ def get_players_ids(arg):
 
 
 def test_case():
-    ids = get_players_ids('name')
+    ids = get_players_ids()
     print(ids)
     print(type(ids))
     print("Gotowe")
 
-test_case()
+#test_case()
