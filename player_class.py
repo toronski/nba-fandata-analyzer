@@ -10,19 +10,22 @@ class Player():
         self.id = id
         self.name = name
 
+    def __str__(self):
+        return f'{self.name}'
+
     def show_previous_games(player_name):
         # get player info needed for 
-        player = pd.read_sql_query(
+        games = pd.read_sql_query(
             q.get_games_info(player_name), engine
         )
-        player = player.tail(10) # in bracket value for number of showed games
+        games = games.tail(10) # in bracket value for number of showed games
         # built all matchup history
         fig = go.FigureWidget(
             data=[
                 go.Bar(
                     name=player_name,
-                    x=player['MATCHUP_DATE'],
-                    y=player['FAN_PTS'],
+                    x=games['MATCHUP_DATE'],
+                    y=games['FAN_PTS'],
                     marker_color='#4D935D')
             ]
         )
@@ -32,7 +35,8 @@ class Player():
             go.Scatter(
                 mode='lines+markers',
                 name='Minutes played',
-                x=player['MATCHUP_DATE'], y=player['MIN'],
+                x=games['MATCHUP_DATE'],
+                y=games['MIN'],
                 line=dict(color='pink'),
                 marker=dict(color='red'))
 )
@@ -44,5 +48,3 @@ class Player():
                         ),
         return previous_graph
     
-
-    def 
