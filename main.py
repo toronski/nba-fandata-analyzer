@@ -99,7 +99,9 @@ app.layout = html.Div(
                             dcc.Tab(label='Player 5', value='tab-5'),
                         ]
                 ),
-                #html.Div(id='tabs-content')
+                html.Div(
+                    id='tabs-content',
+                )    
             ]
         ),
 
