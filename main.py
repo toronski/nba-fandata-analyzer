@@ -86,25 +86,67 @@ app.layout = html.Div(
                 html.Button('Remove', id='remove-button', n_clicks=0)
             ]
         ),
+
         # Tabs to go see through different players added to team
         html.Div(
             className="item players-tabs",
             children = [
                 dcc.Tabs(id="tabs", value='tab-1',
                         children=[
-                            dcc.Tab(label='Player 1', value='tab-1'),
-                            dcc.Tab(label='Player 2', value='tab-2'),
-                            dcc.Tab(label='Player 3', value='tab-3'),
-                            dcc.Tab(label='Player 4', value='tab-4'),
-                            dcc.Tab(label='Player 5', value='tab-5'),
+                            dcc.Tab(label='Player 1', value='tab-1',
+                                    children=html.Div([
+                                        # graph showing previous matchup   
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-1'},
+                                            # here put list of players from mysql
+                                            placeholder="Show player info",
+                                        ),
+                                    ])
+                            ),
+                            dcc.Tab(label='Player 2', value='tab-2',
+                                    children=html.Div([
+                                        # graph showing previous matchup   
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-2'},
+                                            # here put list of players from mysql
+                                            placeholder="Show player info",
+                                        ),
+                                    ])
+                            ),
+                            dcc.Tab(label='Player 3', value='tab-3',
+                                    children=html.Div([
+                                        # graph showing previous matchup   
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-3'},
+                                            # here put list of players from mysql
+                                            placeholder="Show player info",
+                                        ),
+                                    ])
+                            ),
+                            dcc.Tab(label='Player 4', value='tab-4',
+                                    children=html.Div([
+                                        # graph showing previous matchup   
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-4'},
+                                            # here put list of players from mysql
+                                            placeholder="Show player info",
+                                        ),
+                                    ])
+                            ),
+                            dcc.Tab(label='Player 5', value='tab-5',
+                                    children=html.Div([
+                                        # graph showing previous matchup   
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-5'},
+                                            # here put list of players from mysql
+                                            placeholder="Show player info",
+                                        ),
+                                    ])
+                            ),
                         ]
-                ),
-                html.Div(
-                    id='tabs-content',
-                )    
+                )
             ]
         ),
-
 
         html.Div(
             className='item refresh-players',
@@ -147,6 +189,8 @@ def input_triggers_spinner(n_clicks):
 def display_selected_player(player, players_list):
     if players_list is None:
         players_list = []
+    if player is None:
+        player = ' '
     if player is not None:
         # iterate through players list with dict of specific player
         data = get_players_ids() # for each dict
@@ -155,19 +199,40 @@ def display_selected_player(player, players_list):
                 player = Player(index['id'], player) # create player class
                 # add player name to your squad
                 players_list.append(str(player))
-    options = [{'label': p, 'value': p} for p in players_list]
-    return dcc.Checklist(options=options), players_list, None
+        options = [{'label': p, 'value': p} for p in players_list]
+        return dcc.Checklist(options=options), players_list, None
 
+
+@app.callback(
+    Output({'type': 'squad-search-dropdown', 'index': MATCH}, 'options'),
+    Input('players-store', 'data'),
+    State({'type': 'squad-search-dropdown', 'index': MATCH}, 'id')
+)
+def update_squad_dropdown(players_list, id):
+    if players_list is None:
+        return []
+    return [{'label': player, 'value': player} for player in players_list]
+
+
+'''
 # displaying tabs of players
-@app.callback(Output('tabs-content', 'children'),
-                Input('tabs', 'value'))
+@app.callback(
+        Output('tabs-content', 'children'),
+        Input('tabs', 'value')
+)
 def render_content(tab):
     if tab == 'tab-1':
         return html.Div([
             html.H3('Player 1'),
-                # graph showing previous matchup   
-                
-                # graph showing previous matchup against chosen opponent
+            # graph showing previous matchup   
+            dcc.Dropdown(
+                id='squad-search-dropdown',
+                # here put list of players from mysql
+                options=[],
+                placeholder="Search for a player",
+            ),
+            html.Div(id='squad-search-output', children=[]),
+            # graph showing previous matchup against chosen opponent
         ]),
 
     elif tab == 'tab-2':
@@ -186,6 +251,6 @@ def render_content(tab):
         return html.Div([
             html.H3('Player 5')
         ])
-
+'''
 if __name__ == '__main__':
     app.run(debug=True)
