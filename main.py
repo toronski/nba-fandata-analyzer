@@ -1,15 +1,14 @@
 
-from dash import Dash, html, dcc, Input, Output, callback, State, MATCH, Patch
-from players_data import save_games_log, get_players_ids, save_active_players
-import mysql_connector
-from player_class import Player
+from dash import Dash, html, dcc, Input, Output, callback, State, MATCH, Patch, no_update
+from nba_api.stats.static import players
+from nba_api.stats.endpoints import playergamelog
+from nba_api.stats.library.parameters import SeasonAll
+import plotly.graph_objects as go
 
-
-engine = mysql_connector.engine
 
 external_stylesheets = ['https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/litera/bootstrap.min.css']
 
-app = Dash(__name__,
+app = Dash(__name__, suppress_callback_exceptions=True,
            external_stylesheets=external_stylesheets,
            # response to mobile
            meta_tags=[{'name':'viewport',
@@ -76,9 +75,9 @@ app.layout = html.Div(
                 dcc.Store(id='players-store', storage_type='session'),
                 dcc.Dropdown(
                     id='player-search-dropdown',
-                    # here put list of players from mysql
-                    options=[{'label': player, 'value': player} for player in
-                            [name['full_name'] for name in get_players_ids()]
+                    # getting dict with ids and names from mysql, extracting names
+                    options=[{'label': name['full_name'], 'value': name['full_name']} 
+                            for name in players.get_active_players()
                     ],
                     placeholder="Search for a player",
                 ),
@@ -97,10 +96,11 @@ app.layout = html.Div(
                                     children=html.Div([
                                         # graph showing previous matchup   
                                         dcc.Dropdown(
-                                            id={'type': 'squad-search-dropdown', 'index': 'tab-1'},
-                                            # here put list of players from mysql
+                                            id='squad-search-dropdown',
+                                            options=[], # list of stored players
                                             placeholder="Show player info",
                                         ),
+                                        html.Div(id='show-graph-1', children=[]),
                                     ])
                             ),
                             dcc.Tab(label='Player 2', value='tab-2',
@@ -147,35 +147,8 @@ app.layout = html.Div(
                 )
             ]
         ),
-
-        html.Div(
-            className='item refresh-players',
-            children=[
-                # button to update players logs
-                html.Button("Update players logs", id="btn_updateLogs"),
-                dcc.Loading(
-                        id="loading-1",
-                        type="default",
-                        children=html.Div(id="loading-output-1")
-                )
-            ]
-        )
     ]
 )
-
-# loading mark for updating players
-@app.callback(Output("loading-output-1", "children"), Input("btn_updateLogs", "n_clicks"))
-def input_triggers_spinner(n_clicks):
-    # button not clicked
-    if n_clicks is None:
-        return None
-    # button clicked
-    else:
-        # function to update players log
-        save_active_players()
-        id, name = get_players_ids()
-        save_games_log(id, name)
-        return "Updating complete"
 
 
 # searching players
@@ -186,32 +159,68 @@ def input_triggers_spinner(n_clicks):
     Input('player-search-dropdown', 'value'),
     State('players-store', 'data')
 )
-def display_selected_player(player, players_list):
+def add_selected_player_to_club(player, players_list):
     if players_list is None:
         players_list = []
-    if player is None:
-        player = ' '
     if player is not None:
-        # iterate through players list with dict of specific player
-        data = get_players_ids() # for each dict
-        for index in data:
-            if index['full_name'] == player:
-                player = Player(index['id'], player) # create player class
-                # add player name to your squad
-                players_list.append(str(player))
-        options = [{'label': p, 'value': p} for p in players_list]
-        return dcc.Checklist(options=options), players_list, None
+        players_list.append(player)
+    
+    options = [{'label': p, 'value': p} for p in players_list]
+    return dcc.Checklist(options=options), players_list, None
+
+# squad dropdown
+@app.callback(
+    Output('squad-search-dropdown', 'options'),
+    Input('players-store', 'data')
+)
+def update_dropdown_options(stored_data):
+    if stored_data is None:
+        return []
+    return [{'label': player, 'value': player} for player in stored_data]
 
 
 @app.callback(
-    Output({'type': 'squad-search-dropdown', 'index': MATCH}, 'options'),
-    Input('players-store', 'data'),
-    State({'type': 'squad-search-dropdown', 'index': MATCH}, 'id')
+        Output('show-graph-1', 'children'),
+        Input('squad-search-dropdown', 'value')
 )
-def update_squad_dropdown(players_list, id):
-    if players_list is None:
-        return []
-    return [{'label': player, 'value': player} for player in players_list]
+def show_previous_games(player_name):
+        if player_name is None:
+            return None
+        # find player ID
+        player_id = players.find_players_by_full_name(player_name)[0]['id']
+        # download game log of a player
+        game_log = playergamelog.PlayerGameLog(player_id=player_id, season='2023-24').get_data_frames()[0]
+        # get player info needed for 
+        games = game_log.head(10)
+       
+        # built all matchup history
+        fig = go.FigureWidget(
+            data=[
+                go.Bar(
+                    name=player_name,
+                    x=games['GAME_DATE'],
+                    y=games['MIN'],
+                    marker_color='#4D935D')
+            ]
+        )
+
+        # add minutes scatter
+        fig.add_trace(
+            go.Scatter(
+                mode='lines+markers',
+                name='Minutes played',
+                x=games['GAME_DATE'],
+                y=games['MIN'],
+                line=dict(color='pink'),
+                marker=dict(color='red'))
+)
+
+        # display graph
+        previous_graph = dcc.Graph(
+                            id=player_name,
+                            figure=fig
+                        ),
+        return previous_graph
 
 
 '''
@@ -219,8 +228,9 @@ def update_squad_dropdown(players_list, id):
 @app.callback(
         Output('tabs-content', 'children'),
         Input('tabs', 'value')
+        Input('squad-search-dropdown', 'value')
 )
-def render_content(tab):
+def render_content(tab, player_name):
     if tab == 'tab-1':
         return html.Div([
             html.H3('Player 1'),
@@ -251,6 +261,41 @@ def render_content(tab):
         return html.Div([
             html.H3('Player 5')
         ])
+
+
+# searching players
+@app.callback(
+    Output('player-search-output', 'children'),
+    Output('player-search-dropdown', 'value'),
+    Input('player-search-dropdown', 'value',),
+)
+def display_selected_player(player):
+    if players_list is None:
+        players_list = []
+    if player is not None and player != '':
+        # iterate through players list with dict of specific player
+        # data = get_players_ids() # for each dict
+        # for index in data:
+        #     if index['full_name'] == player:
+        #         player = Player(index['id'], player) # create player class
+        #         # add player name to your squad
+        #         players_list.append({'id': player.get_id(), 'name': str(player)})
+        players_list.append(player)
+        options = [{'label': p, 'value': p} for p in players_list]
+        return dcc.Checklist(options=options), players_list, None
+    return None, players_list, None
+
+
+@app.callback(
+        Output('show-graph', 'children'),
+        Input('squad-search-dropdown', 'options')
+)
+def show_player_graph(player):
+    if player is None:
+        return None
+    else:
+        player.show_previous_games()
+    
 '''
 if __name__ == '__main__':
     app.run(debug=True)
