@@ -1,10 +1,8 @@
 
 from dash import Dash, html, dcc, Input, Output, callback, State, MATCH, Patch, no_update
 from nba_api.stats.static import players
-from nba_api.stats.endpoints import playergamelog
 from nba_api.stats.library.parameters import SeasonAll
-import plotly.graph_objects as go
-
+from show_previous_games import display_graph
 
 external_stylesheets = ['https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/litera/bootstrap.min.css']
 
@@ -186,41 +184,7 @@ def update_dropdown_options(stored_data):
 def show_previous_games(player_name):
         if player_name is None:
             return None
-        # find player ID
-        player_id = players.find_players_by_full_name(player_name)[0]['id']
-        # download game log of a player
-        game_log = playergamelog.PlayerGameLog(player_id=player_id, season='2023-24').get_data_frames()[0]
-        # get player info needed for 
-        games = game_log.head(10)
-       
-        # built all matchup history
-        fig = go.FigureWidget(
-            data=[
-                go.Bar(
-                    name=player_name,
-                    x=games['GAME_DATE'],
-                    y=games['MIN'],
-                    marker_color='#4D935D')
-            ]
-        )
-
-        # add minutes scatter
-        fig.add_trace(
-            go.Scatter(
-                mode='lines+markers',
-                name='Minutes played',
-                x=games['GAME_DATE'],
-                y=games['MIN'],
-                line=dict(color='pink'),
-                marker=dict(color='red'))
-)
-
-        # display graph
-        previous_graph = dcc.Graph(
-                            id=player_name,
-                            figure=fig
-                        ),
-        return previous_graph
+        return display_graph(player_name)
 
 
 '''

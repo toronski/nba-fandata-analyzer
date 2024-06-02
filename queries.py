@@ -1,81 +1,27 @@
-import sqlalchemy
 
-def double_double_counter(player_name):
-    update_dd_query = sqlalchemy.text(
-            f"""UPDATE players.`{player_name}`
-            SET DD = CASE
-                WHEN (
-                    (PTS >= 10) +
-                    (REB >= 10) +
-                    (AST >= 10) +
-                    (STL >= 10) +
-                    (BLK >= 10)
-                ) >= 2 THEN 1
-                ELSE 0
-            END;"""
-        )
-    return update_dd_query
+def add_dd_and_td(df):
+    df['DD'] = ((df['PTS'] >= 10) + (df['REB'] >= 10) + (df['AST'] >= 10) 
+                   + (df['STL'] >= 10) + (df['BLK'] >= 10)) >= 2
+    df['DD'] = df['DD'].astype(int)
 
+    df['TD'] = ((df['PTS'] >= 10) + (df['REB'] >= 10) + (df['AST'] >= 10) 
+                   + (df['STL'] >= 10) + (df['BLK'] >= 10)) >= 3
+    df['TD'] = df['TD'].astype(int)
+    
+    return df
 
-def triple_double_counter(player_name):
-    update_td_query = sqlalchemy.text(
-            f"""UPDATE players.`{player_name}`
-            SET TD = CASE
-                WHEN (
-                    (PTS >= 10) +
-                    (REB >= 10) +
-                    (AST >= 10) +
-                    (STL >= 10) +
-                    (BLK >= 10)
-                ) >= 3 THEN 1
-                ELSE 0
-            END;"""
-        )
-    return update_td_query
+def fantasypts_counter(df):
+    # Filter the DataFrame for the specific player
 
-def fantasypts_counter(player_name):
-    update_fantasypts_query = sqlalchemy.text(
-            f"""UPDATE players.`{player_name}`
-            SET FAN_PTS = 
-                (PTS + 
-                (REB * 1.2) + 
-                (AST * 1.5) + 
-                (BLK * 3) + 
-                (STL * 3) + 
-                (TOV * (-2)) + 
-                FG3M + 
-                DD + 
-                TD);"""
-        )
-    return update_fantasypts_query
+    # Calculate the fantasy points
+    df['FAN_PTS'] = (df['PTS'] +
+                            (df['REB'] * 1.2) +
+                            (df['AST'] * 1.5) +
+                            (df['BLK'] * 3) +
+                            (df['STL'] * 3) +
+                            (df['TOV'] * -2) +
+                            df['FG3M'] +
+                            df['DD'] +
+                            df['TD'])
 
-def get_all_players():
-    get_players = sqlalchemy.text(
-        f"SELECT id, full_name FROM players_index"
-    )
-    return get_players
-
-
-def get_games_info(player_name):
-    player_info = sqlalchemy.text(
-        f"""SELECT 
-            SUBSTRING_INDEX(CONCAT(GAME_DATE, ' ', MATCHUP), ' ', -1) AS MATCHUP_DATE, 
-            FAN_PTS,
-            MIN
-            FROM players.`{player_name}`
-            ORDER BY MATCHUP_DATE;"""
-    )
-    # code to select specific team
-    # WHERE
-    # MATCHUP LIKE {opponent}
-    # ORDER BY MATCHUP_DATE;
-
-    return player_info
-
-
-def alter_table(player_name, column_name, column_type):
-    alter = sqlalchemy.text(
-        f"""ALTER TABLE players.`{player_name}`
-        ADD {column_name} {column_type} DEFAULT 0"""
-    )
-    return alter
+    return df
