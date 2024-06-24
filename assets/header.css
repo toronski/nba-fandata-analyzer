@@ -1,12 +1,12 @@
 .container {
     display: grid;
-    grid-template-rows: 110px 575px 75px 50px;
-    grid-template-columns: 300px 1fr;
+    grid-template-rows: 100px 575px 75px 50px;
+    grid-template-columns: 300px 300px 1fr;
     grid-template-areas:
-    'header players'
-    'search graphs'
-    'refresh teams'
-    'footnote footnote'
+    'header players_tabs players_tabs'
+    'search players_tabs players_tabs'
+    'refresh players_tabs players_tabs'
+    'footnote footnote footnote'
     ;
 }
 
@@ -22,13 +22,14 @@
 
 .players-tabs {
     margin: 30px;
-    grid-area: players;
+    grid-area: players_tabs;
 }
 
+/*
 .previous-games-graphs {
     grid-area: graphs;
 }
-
+*/
 .refresh-players {
     grid-area: refresh;
 }
