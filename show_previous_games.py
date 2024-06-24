@@ -2,46 +2,44 @@ from nba_api.stats.static import players
 from nba_api.stats.endpoints import playergamelog
 import plotly.graph_objects as go
 from dash import dcc
-from queries import add_dd_and_td, fantasypts_counter
+from player import Player
 
 def display_graph(player_name): 
-    # find player ID
-    player_id = players.find_players_by_full_name(player_name)[0]['id']
-    # download game log of a player as DataFrame
-    game_log = playergamelog.PlayerGameLog(player_id=player_id, season='2023-24').get_data_frames()[0]
-    # get player info needed for 
-    games = game_log.head(10).copy()
+    try:
+        player_id = players.find_players_by_full_name(player_name)[0]['id']
+        game_log = playergamelog.PlayerGameLog(player_id=player_id, season='2023-24').get_data_frames()[0]
+        player = Player(player_id, player_name)
+        games = player.get_recent_games(game_log)
 
-    # adding Double-Double and Triple-Double columns
-    games = add_dd_and_td(games)
+        fig = go.FigureWidget(
+            data=[
+                go.Bar(
+                    name='Fantasy Points',
+                    x=games['GAME_DATE'],
+                    y=games['FAN_PTS'],
+                    marker_color='#4D935D')
+            ]
+        )
 
-    games = fantasypts_counter(games)
-
-    # built all matchup history
-    fig = go.FigureWidget(
-        data=[
-            go.Bar(
-                name='Fantasy Points',
+        fig.add_trace(
+            go.Scatter(
+                mode='lines+markers',
+                name='Minutes played',
                 x=games['GAME_DATE'],
-                y=games['FAN_PTS'],
-                marker_color='#4D935D')
-        ]
-    )
+                y=games['MIN'],
+                line=dict(color='pink'),
+                marker=dict(color='red'))
+        )
 
-    # add minutes scatter
-    fig.add_trace(
-        go.Scatter(
-            mode='lines+markers',
-            name='Minutes played',
-            x=games['GAME_DATE'],
-            y=games['MIN'],
-            line=dict(color='pink'),
-            marker=dict(color='red'))
-)
+        previous_graph = dcc.Graph(
+            id=player_name,
+            figure=fig
+        )
+        return previous_graph
 
-    # display graph
-    previous_graph = dcc.Graph(
-                        id=player_name,
-                        figure=fig
-                    ),
-    return previous_graph
+    except IndexError as e:
+        logging.error(f"Player {player_name} not found: {e}")
+        return html.Div(f"Player {player_name} not found.")
+    except Exception as e:
+        logging.error(f"Error fetching player data: {e}")
+        return html.Div("An error occurred while fetching player data.")

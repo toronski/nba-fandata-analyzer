@@ -1,4 +1,3 @@
-
 def add_dd_and_td(df):
     df['DD'] = ((df['PTS'] >= 10) + (df['REB'] >= 10) + (df['AST'] >= 10) 
                    + (df['STL'] >= 10) + (df['BLK'] >= 10)) >= 2
@@ -11,9 +10,6 @@ def add_dd_and_td(df):
     return df
 
 def fantasypts_counter(df):
-    # Filter the DataFrame for the specific player
-
-    # Calculate the fantasy points
     df['FAN_PTS'] = (df['PTS'] +
                             (df['REB'] * 1.2) +
                             (df['AST'] * 1.5) +

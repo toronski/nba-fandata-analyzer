@@ -4,14 +4,13 @@ SoFan Data is a tool to analyze NBA players for popular Fantasy Sports game Sora
 
 ### Disclaimer
 
-Project is currently in the making.
+Project is currently in alpha stage.
 
 What I currently work on?
-> integrating branches (layout and API functions) to achieve basic alpha functionality
+> Different timeframes for games played.
 
 ## Features
 
-* **Database Integration**: Utilizes MySQL to store and retrieve player statistics.
 * **NBA API Connection**: Fetches player statistics from the NBA API.
 * **Squad Management**: Easy addition and removal of players from user squads.
 * **Statistics Analysis**: Implements [Sorare scoring system](https://nbaguide.sorare.com/how-to-play/the-basics/scoring-system) points calculation using Plotly for data visualization.
@@ -21,10 +20,22 @@ What I currently work on?
 
 ## Installation
 
+Make sure you have Python installed.
+
+Then run:
 ```python
-to be written...
+pip install -r requirements.txt
 ```
 
+To run the app use:
+```python
+python main.py
+```
+
+App will be run on address:
+```python
+http://127.0.0.1:8050/
+```
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
