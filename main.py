@@ -38,58 +38,72 @@ app.layout = html.Div(
             className="item players-tabs",
             children=[
                 dcc.Tabs(id="tabs", value='tab-1',
-                         children=[
-                             dcc.Tab(label='Player 1', value='tab-1',
-                                     children=html.Div([
-                                         dcc.Dropdown(
-                                             id={'type': 'squad-search-dropdown', 'index': 'tab-1'},
-                                             options=[],
-                                             placeholder="Show player info",
-                                         ),
-                                         html.Div(id={'type': 'show-graph', 'index': 'tab-1'}, children=[]),
-                                     ])
-                             ),
-                             dcc.Tab(label='Player 2', value='tab-2',
-                                     children=html.Div([
-                                         dcc.Dropdown(
-                                             id={'type': 'squad-search-dropdown', 'index': 'tab-2'},
-                                             options=[],
-                                             placeholder="Show player info",
-                                         ),
-                                         html.Div(id={'type': 'show-graph', 'index': 'tab-2'}, children=[]),
-                                     ])
-                             ),
-                             dcc.Tab(label='Player 3', value='tab-3',
-                                     children=html.Div([
-                                         dcc.Dropdown(
-                                             id={'type': 'squad-search-dropdown', 'index': 'tab-3'},
-                                             options=[],
-                                             placeholder="Show player info",
-                                         ),
-                                         html.Div(id={'type': 'show-graph', 'index': 'tab-3'}, children=[]),
-                                     ])
-                             ),
-                             dcc.Tab(label='Player 4', value='tab-4',
-                                     children=html.Div([
-                                         dcc.Dropdown(
-                                             id={'type': 'squad-search-dropdown', 'index': 'tab-4'},
-                                             options=[],
-                                             placeholder="Show player info",
-                                         ),
-                                         html.Div(id={'type': 'show-graph', 'index': 'tab-4'}, children=[]),
-                                     ])
-                             ),
-                             dcc.Tab(label='Player 5', value='tab-5',
-                                     children=html.Div([
-                                         dcc.Dropdown(
-                                             id={'type': 'squad-search-dropdown', 'index': 'tab-5'},
-                                             options=[],
-                                             placeholder="Show player info",
-                                         ),
-                                         html.Div(id={'type': 'show-graph', 'index': 'tab-5'}, children=[]),
-                                     ])
-                             ),
-                         ]
+                        children=[
+                            dcc.Tab(label='Player 1', value='tab-1',
+                                    children=html.Div([
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-1'},
+                                            options=[],
+                                            placeholder="Show player info",
+                                        ),
+                                        html.Div([
+                                            dcc.Dropdown(
+                                                id='num-games-dropdown',
+                                                options=[
+                                                    {'label': 'Last 5 games', 'value': 5},
+                                                    {'label': 'Last 10 games', 'value': 10},
+                                                    {'label': 'Last 15 games', 'value': 15},
+                                                    {'label': 'Last 25 games', 'value': 25},
+                                                    {'label': 'All season games', 'value': 'all'}
+                                                ],
+                                                placeholder='Number of games to show'
+                                            )
+                                        ], 
+                                        style={'width': '50%', 'display': 'inline-block'}),
+                                        html.Div(id={'type': 'show-graph', 'index': 'tab-1'}, children=[]),
+                                    ])
+                            ),
+                            dcc.Tab(label='Player 2', value='tab-2',
+                                    children=html.Div([
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-2'},
+                                            options=[],
+                                            placeholder="Show player info",
+                                        ),
+                                        html.Div(id={'type': 'show-graph', 'index': 'tab-2'}, children=[]),
+                                    ])
+                            ),
+                            dcc.Tab(label='Player 3', value='tab-3',
+                                    children=html.Div([
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-3'},
+                                            options=[],
+                                            placeholder="Show player info",
+                                        ),
+                                        html.Div(id={'type': 'show-graph', 'index': 'tab-3'}, children=[]),
+                                    ])
+                            ),
+                            dcc.Tab(label='Player 4', value='tab-4',
+                                    children=html.Div([
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-4'},
+                                            options=[],
+                                            placeholder="Show player info",
+                                        ),
+                                        html.Div(id={'type': 'show-graph', 'index': 'tab-4'}, children=[]),
+                                    ])
+                            ),
+                            dcc.Tab(label='Player 5', value='tab-5',
+                                    children=html.Div([
+                                        dcc.Dropdown(
+                                            id={'type': 'squad-search-dropdown', 'index': 'tab-5'},
+                                            options=[],
+                                            placeholder="Show player info",
+                                        ),
+                                        html.Div(id={'type': 'show-graph', 'index': 'tab-5'}, children=[]),
+                                    ])
+                            ),
+                        ]
                 )
             ]
         ),
@@ -137,12 +151,15 @@ def update_tab_dropdown_options(stored_data):
 
 @app.callback(
     Output({'type': 'show-graph', 'index': MATCH}, 'children'),
-    Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value')
+    Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value'),
+    Input('num-games-dropdown', 'value')
 )
-def show_previous_games(player_name):
+def show_previous_games(player_name, games_number):
     if player_name is None:
         return None
-    return display_graph(player_name)
+    # dodac argument z liczba gier
+    # dodac osobny dropdown menu do glownego layoutu
+    return display_graph(player_name, games_number)
 
 if __name__ == '__main__':
     app.run(debug=True)
