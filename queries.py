@@ -21,3 +21,10 @@ def fantasypts_counter(df):
                             df['TD'])
 
     return df
+
+def opponent_shorter(df):
+    df['MATCHUP'] = df['MATCHUP'].apply(
+        lambda x: x.split(' ')[2]
+    )
+
+    return df

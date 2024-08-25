@@ -50,16 +50,15 @@ app.layout = html.Div(
                                             dcc.Dropdown(
                                                 id='num-games-dropdown',
                                                 options=[
-                                                    {'label': 'Last 5 games', 'value': 5},
-                                                    {'label': 'Last 10 games', 'value': 10},
-                                                    {'label': 'Last 15 games', 'value': 15},
-                                                    {'label': 'Last 25 games', 'value': 25},
-                                                    {'label': 'All season games', 'value': 'all'}
+                                                    {'label': '5 games', 'value': 5},
+                                                    {'label': '10 games', 'value': 10},
+                                                    {'label': '15 games', 'value': 15},
+                                                    {'label': '25 games', 'value': 25},
                                                 ],
-                                                placeholder='Number of games to show'
+                                                placeholder='Games to show'
                                             )
                                         ], 
-                                        style={'width': '50%', 'display': 'inline-block'}),
+                                        style={'width': '20%', 'display': 'inline-block'}),
                                         html.Div(id={'type': 'show-graph', 'index': 'tab-1'}, children=[]),
                                     ])
                             ),
