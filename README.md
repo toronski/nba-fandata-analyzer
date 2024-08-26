@@ -7,7 +7,7 @@ SoFan Data is a tool to analyze NBA players for popular Fantasy Sports game Sora
 Project is currently in alpha stage.
 
 What I currently work on?
-> Different timeframes for games played.
+> Graphs data and overall display
 
 ## Features
 
