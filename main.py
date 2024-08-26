@@ -1,6 +1,6 @@
 from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH
 from nba_api.stats.static import players
-from show_previous_games import display_graph
+from show_previous_games import previous_games_graph, one_previous_opponent
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -59,7 +59,49 @@ app.layout = html.Div(
                                             )
                                         ], 
                                         style={'width': '20%', 'display': 'inline-block'}),
-                                        html.Div(id={'type': 'show-graph', 'index': 'tab-1'}, children=[]),
+
+                                        html.Div([
+                                            dcc.Dropdown(
+                                                id='opponents-dropdown',
+                                                options=[
+                                                    {'label': 'Atlanta Hawks', 'value': 'ATL'},
+                                                    {'label': 'Boston Celtics', 'value': 'BOS'},
+                                                    {'label': 'Brooklyn Nets', 'value': 'BKN'},
+                                                    {'label': 'Charlotte Hornets', 'value': 'CHA'},
+                                                    {'label': 'Chicago Bulls', 'value': 'CHI'},
+                                                    {'label': 'Cleveland Cavaliers', 'value': 'CLE'},
+                                                    {'label': 'Dallas Mavericks', 'value': 'DAL'},
+                                                    {'label': 'Denver Nuggets', 'value': 'DEN'},
+                                                    {'label': 'Detroit Pistons', 'value': 'DET'},
+                                                    {'label': 'Golden State Warriors', 'value': 'GSW'},
+                                                    {'label': 'Houston Rockets', 'value': 'HOU'},
+                                                    {'label': 'Indiana Pacers', 'value': 'IND'},
+                                                    {'label': 'Los Angeles Clippers', 'value': 'LAC'},
+                                                    {'label': 'Los Angeles Lakers', 'value': 'LAL'},
+                                                    {'label': 'Memphis Grizzlies', 'value': 'MEM'},
+                                                    {'label': 'Miami Heat', 'value': 'MIA'},
+                                                    {'label': 'Milwaukee Bucks', 'value': 'MIL'},
+                                                    {'label': 'Minnesota Timberwolves', 'value': 'MIN'},
+                                                    {'label': 'New Orleans Pelicans', 'value': 'NOP'},
+                                                    {'label': 'New York Knicks', 'value': 'NYK'},
+                                                    {'label': 'Oklahoma City Thunder', 'value': 'OKC'},
+                                                    {'label': 'Orlando Magic', 'value': 'ORL'},
+                                                    {'label': 'Philadelphia 76ers', 'value': 'PHI'},
+                                                    {'label': 'Phoenix Suns', 'value': 'PHX'},
+                                                    {'label': 'Portland Trail Blazers', 'value': 'POR'},
+                                                    {'label': 'Sacramento Kings', 'value': 'SAC'},
+                                                    {'label': 'San Antonio Spurs', 'value': 'SAS'},
+                                                    {'label': 'Toronto Raptors', 'value': 'TOR'},
+                                                    {'label': 'Utah Jazz', 'value': 'UTA'},
+                                                    {'label': 'Washington Wizards', 'value': 'WAS'}
+                                                ]
+                                            )
+                                        ],
+                                        style={'width': '35%', 'display': 'inline-block'}),
+
+                                        html.Div(id={'type': 'show-graph1', 'index': 'tab-1'}, children=[]),
+                                        html.Div(id={'type': 'show-graph2', 'index': 'tab-1'}, children=[])
+                                        # domyslnie ustawiony nastepny przeciwnik
                                     ])
                             ),
                             dcc.Tab(label='Player 2', value='tab-2',
@@ -149,16 +191,25 @@ def update_tab_dropdown_options(stored_data):
     return [{'label': player, 'value': player} for player in stored_data]
 
 @app.callback(
-    Output({'type': 'show-graph', 'index': MATCH}, 'children'),
+    Output({'type': 'show-graph1', 'index': MATCH}, 'children'),
     Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value'),
     Input('num-games-dropdown', 'value')
 )
-def show_previous_games(player_name, games_number):
+def previous_games(player_name, games_number):
     if player_name is None:
         return None
-    # dodac argument z liczba gier
-    # dodac osobny dropdown menu do glownego layoutu
-    return display_graph(player_name, games_number)
+    return previous_games_graph(player_name, games_number)
+
+@app.callback(
+    Output({'type': 'show-graph2', 'index': MATCH}, 'children'),
+    Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value'),
+    Input('opponents-dropdown', 'value')
+)
+def previous_opponent(player_name, team_filter, games_number=100):
+    if player_name is None:
+        return None
+    return one_previous_opponent(player_name, games_number, team_filter)
+    
 
 if __name__ == '__main__':
     app.run(debug=True)
