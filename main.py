@@ -41,25 +41,33 @@ app.layout = html.Div(
                         children=[
                             dcc.Tab(label='Player 1', value='tab-1',
                                     children=html.Div([
-                                        dcc.Dropdown(
-                                            id={'type': 'squad-search-dropdown', 'index': 'tab-1'},
-                                            options=[],
-                                            placeholder="Show player info",
-                                        ),
                                         html.Div([
                                             dcc.Dropdown(
-                                                id='num-games-dropdown',
-                                                options=[
+                                                id={'type': 'squad-search-dropdown', 'index': 'tab-1'},
+                                                options=[],
+                                                placeholder="Show player info",
+                                            )],
+                                        style={'width': '33%', 'display': 'inline-block'}),
+                                        html.Div([
+                                            dcc.Dropdown(
+                                                ['2023-24', '2022-23'], '2023-24',
+                                                id='season-dropdown',
+                                                placeholder="Season",
+                                            )],
+                                        style={'width': '16%', 'display': 'inline-block'}),
+                                        html.Div([
+                                            dcc.Dropdown(
+                                                [
                                                     {'label': '5 games', 'value': 5},
                                                     {'label': '10 games', 'value': 10},
                                                     {'label': '15 games', 'value': 15},
                                                     {'label': '25 games', 'value': 25},
-                                                ],
+                                                ], 5,
+                                                id='num-games-dropdown',
                                                 placeholder='Games to show'
                                             )
                                         ], 
-                                        style={'width': '20%', 'display': 'inline-block'}),
-
+                                        style={'width': '21%', 'display': 'inline-block'}),
                                         html.Div([
                                             dcc.Dropdown(
                                                 id='opponents-dropdown',
@@ -97,8 +105,8 @@ app.layout = html.Div(
                                                 ]
                                             )
                                         ],
-                                        style={'width': '35%', 'display': 'inline-block'}),
-
+                                        style={'width': '30%', 'display': 'inline-block'}),
+                        
                                         html.Div(id={'type': 'show-graph1', 'index': 'tab-1'}, children=[]),
                                         html.Div(id={'type': 'show-graph2', 'index': 'tab-1'}, children=[])
                                         # domyslnie ustawiony nastepny przeciwnik
@@ -193,22 +201,25 @@ def update_tab_dropdown_options(stored_data):
 @app.callback(
     Output({'type': 'show-graph1', 'index': MATCH}, 'children'),
     Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value'),
-    Input('num-games-dropdown', 'value')
+    Input('num-games-dropdown', 'value'),
+    Input('season-dropdown', 'value'),
+    #Input({'type': 'season-dropdown', 'index': MATCH}, 'value'),
 )
-def previous_games(player_name, games_number):
+def previous_games(player_name, games_number, season):
     if player_name is None:
         return None
-    return previous_games_graph(player_name, games_number)
+    return previous_games_graph(player_name, games_number, season)
 
 @app.callback(
     Output({'type': 'show-graph2', 'index': MATCH}, 'children'),
     Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value'),
+    Input('season-dropdown', 'value'),
     Input('opponents-dropdown', 'value')
 )
-def previous_opponent(player_name, team_filter, games_number=100):
+def previous_opponent(player_name, season, team_filter, games_number=100):
     if player_name is None:
         return None
-    return one_previous_opponent(player_name, games_number, team_filter)
+    return one_previous_opponent(player_name, games_number, season, team_filter)
     
 
 if __name__ == '__main__':

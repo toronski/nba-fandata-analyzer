@@ -5,9 +5,9 @@ from nba_api.stats.endpoints import playergamelog
 from player import Player
 from queries import opponent_shorter
 
-def graph_preparation(player_name, games_number, team_filter=None):
+def graph_preparation(player_name, games_number, season='2023-24', team_filter=None):
     player_id = players.find_players_by_full_name(player_name)[0]['id']
-    game_log = playergamelog.PlayerGameLog(player_id=player_id, season='2023-24').get_data_frames()[0]
+    game_log = playergamelog.PlayerGameLog(player_id=player_id, season=season).get_data_frames()[0]
     player = Player(player_id, player_name)
     games = player.get_recent_games(game_log, games_number)
     games = games.iloc[::-1]
@@ -15,15 +15,14 @@ def graph_preparation(player_name, games_number, team_filter=None):
 
     if team_filter:
         games = games[games['MATCHUP'].str.contains(team_filter)]
-        #print(games) # cos tu sie pierdoli !!
 
     games['MATCHUP_INDEXED'] = games['MATCHUP'] + ' (' + (games.index+1).astype(str) + ')'
     
     return games
 
 
-def previous_games_graph(player_name, games_number, team_filter=None): 
-    games = graph_preparation(player_name, games_number, team_filter)
+def previous_games_graph(player_name, games_number, season, team_filter=None): 
+    games = graph_preparation(player_name, games_number,season, team_filter)
 
     fig = go.FigureWidget(
         data=[
@@ -64,8 +63,8 @@ def previous_games_graph(player_name, games_number, team_filter=None):
     return previous_graph
 
 
-def one_previous_opponent(player_name, games_number, team_filter):
-    games = graph_preparation(player_name, games_number, team_filter)
+def one_previous_opponent(player_name, games_number, season, team_filter):
+    games = graph_preparation(player_name, games_number, season, team_filter)
 
     fig = go.FigureWidget(
         data=[
