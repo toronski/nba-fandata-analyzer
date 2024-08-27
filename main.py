@@ -1,5 +1,6 @@
 from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH
 from nba_api.stats.static import players
+from nba_api.stats.endpoints import PlayerNextNGames
 from show_previous_games import previous_games_graph, one_previous_opponent
 import logging
 
@@ -39,20 +40,22 @@ app.layout = html.Div(
             children=[
                 dcc.Tabs(id="tabs", value='tab-1',
                         children=[
-                            dcc.Tab(label='Player 1', value='tab-1',
+                            dcc.Tab(id={'type': 'dynamic-tab', 'index': 'tab-1'}, value='tab-1', className='custom-tab-label',
                                     children=html.Div([
                                         html.Div([
                                             dcc.Dropdown(
                                                 id={'type': 'squad-search-dropdown', 'index': 'tab-1'},
                                                 options=[],
                                                 placeholder="Show player info",
+                                                clearable=False
                                             )],
                                         style={'width': '33%', 'display': 'inline-block'}),
                                         html.Div([
                                             dcc.Dropdown(
-                                                ['2023-24', '2022-23'], '2023-24',
+                                                ['2023-24', '2022-23'], '2023-24', # ustawic podglad na kilka sezonow
                                                 id='season-dropdown',
                                                 placeholder="Season",
+                                                clearable=False
                                             )],
                                         style={'width': '16%', 'display': 'inline-block'}),
                                         html.Div([
@@ -102,7 +105,7 @@ app.layout = html.Div(
                                                     {'label': 'Toronto Raptors', 'value': 'TOR'},
                                                     {'label': 'Utah Jazz', 'value': 'UTA'},
                                                     {'label': 'Washington Wizards', 'value': 'WAS'}
-                                                ]
+                                                ], clearable=False
                                             )
                                         ],
                                         style={'width': '30%', 'display': 'inline-block'}),
@@ -199,11 +202,19 @@ def update_tab_dropdown_options(stored_data):
     return [{'label': player, 'value': player} for player in stored_data]
 
 @app.callback(
+    Output({'type': 'dynamic-tab', 'index': MATCH}, 'label'),
+    Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value')
+)
+def update_tab_label(player_name):
+    if player_name is None:
+        return 'Empty'
+    return player_name
+
+@app.callback(
     Output({'type': 'show-graph1', 'index': MATCH}, 'children'),
     Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value'),
     Input('num-games-dropdown', 'value'),
-    Input('season-dropdown', 'value'),
-    #Input({'type': 'season-dropdown', 'index': MATCH}, 'value'),
+    Input('season-dropdown', 'value')
 )
 def previous_games(player_name, games_number, season):
     if player_name is None:

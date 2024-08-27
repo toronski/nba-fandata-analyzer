@@ -5,7 +5,7 @@ from nba_api.stats.endpoints import playergamelog
 from player import Player
 from queries import opponent_shorter
 
-def graph_preparation(player_name, games_number, season='2023-24', team_filter=None):
+def graph_preparation(player_name, games_number, season, team_filter=None):
     player_id = players.find_players_by_full_name(player_name)[0]['id']
     game_log = playergamelog.PlayerGameLog(player_id=player_id, season=season).get_data_frames()[0]
     player = Player(player_id, player_name)
@@ -55,8 +55,14 @@ def previous_games_graph(player_name, games_number, season, team_filter=None):
 
     previous_graph = dcc.Graph(
         id=player_name,
+        config={
+            'displayModeBar': False,
+            'displaylogo': False,
+            'modeBarButtonsToRemove':
+                ['resetScale2d', 'hoverClosestCartesian', 'hoverCompareCartesian']
+        },
         figure=fig,
-        config={'responsive': True},
+        #config={'responsive': True},
         style={'width': '90%', 'height': '350px'}
     )
 
@@ -98,7 +104,12 @@ def one_previous_opponent(player_name, games_number, season, team_filter):
     one_previous_opponent = dcc.Graph(
         id=player_name,
         figure=fig,
-        config={'responsive': True},
+        config={
+            'displayModeBar': False,
+            'displaylogo': False,
+            'modeBarButtonsToRemove':
+                ['resetScale2d', 'hoverClosestCartesian', 'hoverCompareCartesian']
+        },
         style={'width': '90%', 'height': '350px'}
     )
 
