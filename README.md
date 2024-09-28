@@ -8,7 +8,9 @@ Project is currently in alpha stage.
 
 What I currently work on?
 > Setting next opponent by default.
+>
 > Displaying average points of a player from the last 10 matches.
+>
 > Ability to set card bonus percentage.
 
 
