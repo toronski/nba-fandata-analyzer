@@ -1,8 +1,9 @@
 from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH
 from nba_api.stats.static import players
-from nba_api.stats.endpoints import PlayerNextNGames
 from show_previous_games import previous_games_graph, one_previous_opponent
 import logging
+from nba_api.stats.library.parameters import SeasonAll
+from player_tab import display_player_tab
 
 logging.basicConfig(level=logging.INFO)
 
@@ -40,125 +41,40 @@ app.layout = html.Div(
             children=[
                 dcc.Tabs(id="tabs", value='tab-1',
                         children=[
-                            dcc.Tab(id={'type': 'dynamic-tab', 'index': 'tab-1'}, value='tab-1', className='custom-tab-label',
-                                    children=html.Div([
-                                        html.Div([
-                                            dcc.Dropdown(
-                                                id={'type': 'squad-search-dropdown', 'index': 'tab-1'},
-                                                options=[],
-                                                placeholder="Show player info",
-                                                clearable=False
-                                            )],
-                                        style={'width': '33%', 'display': 'inline-block'}),
-                                        html.Div([
-                                            dcc.Dropdown(
-                                                ['2023-24', '2022-23'], '2023-24', # ustawic podglad na kilka sezonow
-                                                id='season-dropdown',
-                                                placeholder="Season",
-                                                clearable=False
-                                            )],
-                                        style={'width': '16%', 'display': 'inline-block'}),
-                                        html.Div([
-                                            dcc.Dropdown(
-                                                [
-                                                    {'label': '5 games', 'value': 5},
-                                                    {'label': '10 games', 'value': 10},
-                                                    {'label': '15 games', 'value': 15},
-                                                    {'label': '25 games', 'value': 25},
-                                                ], 5,
-                                                id='num-games-dropdown',
-                                                placeholder='Games to show'
-                                            )
-                                        ], 
-                                        style={'width': '21%', 'display': 'inline-block'}),
-                                        html.Div([
-                                            dcc.Dropdown(
-                                                id='opponents-dropdown',
-                                                options=[
-                                                    {'label': 'Atlanta Hawks', 'value': 'ATL'},
-                                                    {'label': 'Boston Celtics', 'value': 'BOS'},
-                                                    {'label': 'Brooklyn Nets', 'value': 'BKN'},
-                                                    {'label': 'Charlotte Hornets', 'value': 'CHA'},
-                                                    {'label': 'Chicago Bulls', 'value': 'CHI'},
-                                                    {'label': 'Cleveland Cavaliers', 'value': 'CLE'},
-                                                    {'label': 'Dallas Mavericks', 'value': 'DAL'},
-                                                    {'label': 'Denver Nuggets', 'value': 'DEN'},
-                                                    {'label': 'Detroit Pistons', 'value': 'DET'},
-                                                    {'label': 'Golden State Warriors', 'value': 'GSW'},
-                                                    {'label': 'Houston Rockets', 'value': 'HOU'},
-                                                    {'label': 'Indiana Pacers', 'value': 'IND'},
-                                                    {'label': 'Los Angeles Clippers', 'value': 'LAC'},
-                                                    {'label': 'Los Angeles Lakers', 'value': 'LAL'},
-                                                    {'label': 'Memphis Grizzlies', 'value': 'MEM'},
-                                                    {'label': 'Miami Heat', 'value': 'MIA'},
-                                                    {'label': 'Milwaukee Bucks', 'value': 'MIL'},
-                                                    {'label': 'Minnesota Timberwolves', 'value': 'MIN'},
-                                                    {'label': 'New Orleans Pelicans', 'value': 'NOP'},
-                                                    {'label': 'New York Knicks', 'value': 'NYK'},
-                                                    {'label': 'Oklahoma City Thunder', 'value': 'OKC'},
-                                                    {'label': 'Orlando Magic', 'value': 'ORL'},
-                                                    {'label': 'Philadelphia 76ers', 'value': 'PHI'},
-                                                    {'label': 'Phoenix Suns', 'value': 'PHX'},
-                                                    {'label': 'Portland Trail Blazers', 'value': 'POR'},
-                                                    {'label': 'Sacramento Kings', 'value': 'SAC'},
-                                                    {'label': 'San Antonio Spurs', 'value': 'SAS'},
-                                                    {'label': 'Toronto Raptors', 'value': 'TOR'},
-                                                    {'label': 'Utah Jazz', 'value': 'UTA'},
-                                                    {'label': 'Washington Wizards', 'value': 'WAS'}
-                                                ], clearable=False
-                                            )
-                                        ],
-                                        style={'width': '30%', 'display': 'inline-block'}),
-                        
-                                        html.Div(id={'type': 'show-graph1', 'index': 'tab-1'}, children=[]),
-                                        html.Div(id={'type': 'show-graph2', 'index': 'tab-1'}, children=[])
-                                        # domyslnie ustawiony nastepny przeciwnik
-                                    ])
-                            ),
-                            dcc.Tab(label='Player 2', value='tab-2',
-                                    children=html.Div([
-                                        dcc.Dropdown(
-                                            id={'type': 'squad-search-dropdown', 'index': 'tab-2'},
-                                            options=[],
-                                            placeholder="Show player info",
-                                        ),
-                                        html.Div(id={'type': 'show-graph', 'index': 'tab-2'}, children=[]),
-                                    ])
-                            ),
-                            dcc.Tab(label='Player 3', value='tab-3',
-                                    children=html.Div([
-                                        dcc.Dropdown(
-                                            id={'type': 'squad-search-dropdown', 'index': 'tab-3'},
-                                            options=[],
-                                            placeholder="Show player info",
-                                        ),
-                                        html.Div(id={'type': 'show-graph', 'index': 'tab-3'}, children=[]),
-                                    ])
-                            ),
-                            dcc.Tab(label='Player 4', value='tab-4',
-                                    children=html.Div([
-                                        dcc.Dropdown(
-                                            id={'type': 'squad-search-dropdown', 'index': 'tab-4'},
-                                            options=[],
-                                            placeholder="Show player info",
-                                        ),
-                                        html.Div(id={'type': 'show-graph', 'index': 'tab-4'}, children=[]),
-                                    ])
-                            ),
-                            dcc.Tab(label='Player 5', value='tab-5',
-                                    children=html.Div([
-                                        dcc.Dropdown(
-                                            id={'type': 'squad-search-dropdown', 'index': 'tab-5'},
-                                            options=[],
-                                            placeholder="Show player info",
-                                        ),
-                                        html.Div(id={'type': 'show-graph', 'index': 'tab-5'}, children=[]),
-                                    ])
-                            ),
+
+                            dcc.Tab(id={'type': 'dynamic-tab', 'index': 'tab-1'}, 
+                                value='tab-1', 
+                                className='custom-tab-label',
+                                
+                                children=display_player_tab('tab-1')),
+
+                            dcc.Tab(id={'type': 'dynamic-tab', 'index': 'tab-2'}, 
+                                value='tab-2', 
+                                className='custom-tab-label',
+                                
+                                children=display_player_tab('tab-2')),
+
+                            dcc.Tab(id={'type': 'dynamic-tab', 'index': 'tab-3'}, 
+                                value='tab-3', 
+                                className='custom-tab-label',
+                                
+                                children=display_player_tab('tab-3')),
+
+                            dcc.Tab(id={'type': 'dynamic-tab', 'index': 'tab-4'}, 
+                                value='tab-4', 
+                                className='custom-tab-label',
+                                
+                                children=display_player_tab('tab-4')),
+
+                            dcc.Tab(id={'type': 'dynamic-tab', 'index': 'tab-5'}, 
+                                value='tab-5', 
+                                className='custom-tab-label',
+                                
+                                children=display_player_tab('tab-5'))
                         ]
-                )
+                ),
             ]
-        ),
+        )
     ]
 )
 
@@ -213,8 +129,8 @@ def update_tab_label(player_name):
 @app.callback(
     Output({'type': 'show-graph1', 'index': MATCH}, 'children'),
     Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value'),
-    Input('num-games-dropdown', 'value'),
-    Input('season-dropdown', 'value')
+    Input({'type': 'num-games-dropdown', 'index': MATCH}, 'value'),
+    Input({'type': 'season-dropdown', 'index': MATCH}, 'value')
 )
 def previous_games(player_name, games_number, season):
     if player_name is None:
@@ -224,13 +140,12 @@ def previous_games(player_name, games_number, season):
 @app.callback(
     Output({'type': 'show-graph2', 'index': MATCH}, 'children'),
     Input({'type': 'squad-search-dropdown', 'index': MATCH}, 'value'),
-    Input('season-dropdown', 'value'),
-    Input('opponents-dropdown', 'value')
+    Input({'type': 'opponents-dropdown', 'index': MATCH}, 'value')
 )
-def previous_opponent(player_name, season, team_filter, games_number=100):
+def previous_opponent(player_name, team_filter, games_number=150):
     if player_name is None:
         return None
-    return one_previous_opponent(player_name, games_number, season, team_filter)
+    return one_previous_opponent(player_name, games_number, SeasonAll.all, team_filter)
     
 
 if __name__ == '__main__':

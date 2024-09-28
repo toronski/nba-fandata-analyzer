@@ -41,7 +41,8 @@ def previous_games_graph(player_name, games_number, season, team_filter=None):
             x=games['MATCHUP_INDEXED'],
             y=games['MIN'],
             line=dict(color='pink'),
-            marker=dict(color='red'))
+            marker=dict(color='red')
+        )
     )
 
     fig.update_layout(
@@ -50,7 +51,18 @@ def previous_games_graph(player_name, games_number, season, team_filter=None):
             minreducedheight=250,
             width=800,
             height=350,
-            margin=dict(l=20, r=20, t=20, b=20)
+            margin=dict(l=20, r=20, t=20, b=20),
+            # title={
+            #     'text': "Previous games",
+            #     'y':0.9,
+            #     'x':0.22,
+            #     'xanchor': 'right',
+            #     'yanchor': 'top',
+            #     'font': {
+            #         'size': 18.5,
+            #         'family': 'Arial, sans-serif'
+            #     }
+            # }
         )
 
     previous_graph = dcc.Graph(
@@ -89,7 +101,8 @@ def one_previous_opponent(player_name, games_number, season, team_filter):
             x=games['MATCHUP_INDEXED'],
             y=games['MIN'],
             line=dict(color='pink'),
-            marker=dict(color='red'))
+            marker=dict(color='red')
+        )
     )
 
     fig.update_layout(
